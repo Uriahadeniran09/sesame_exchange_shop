@@ -52,6 +52,6 @@ Error handling is robust, with clear UI feedback for permission issues and other
 - Flutter SDK
 - Firebase project (Firestore & Auth enabled)
 
-## License
-
-MIT
+##Images
+![img.png](img.png)
+![img_1.png](img_1.png)

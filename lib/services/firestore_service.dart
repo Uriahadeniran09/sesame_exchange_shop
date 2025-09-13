@@ -511,7 +511,6 @@ class FirestoreService {
         if (aTime == null || bTime == null) return 0;
         return bTime.compareTo(aTime); // Descending order (newest first)
       });
-
     });
   }
 
