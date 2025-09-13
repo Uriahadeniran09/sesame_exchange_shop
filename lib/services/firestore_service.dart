@@ -512,7 +512,6 @@ class FirestoreService {
         return bTime.compareTo(aTime); // Descending order (newest first)
       });
 
-      return messages;
     });
   }
 
