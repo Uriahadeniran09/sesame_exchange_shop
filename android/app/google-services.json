@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "115934502087",
+    "project_id": "sesame-exchange-app",
+    "storage_bucket": "sesame-exchange-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115934502087:android:c2d177e2a099dc784432e2",
+        "android_client_info": {
+          "package_name": "com.example.sesame_exchange_shop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "115934502087-8m27hglf7dfs8cpq8fdll2h6oaf7v3bq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.sesame_exchange_shop",
+            "certificate_hash": "e1b9344d1b34d3b0c4dc3736f17e0ad2388a0d38"
+          }
+        },
+        {
+          "client_id": "115934502087-255fobjb78705pdr2qvgsrucjq3jbm32.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBld7DeK_AugG3cCx7crLnwKXQzvh_EywE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "115934502087-255fobjb78705pdr2qvgsrucjq3jbm32.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "115934502087-bgaijpqo3ocg3bps0rgqs0beenii9gic.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.sesameExchangeShop"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
