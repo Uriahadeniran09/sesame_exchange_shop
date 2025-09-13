@@ -53,5 +53,11 @@ Error handling is robust, with clear UI feedback for permission issues and other
 - Firebase project (Firestore & Auth enabled)
 
 ##Images
-![img.png](img.png)
-![img_1.png](img_1.png)
+Add page:
+<img width="381" height="805" alt="image" src="https://github.com/user-attachments/assets/e55eb6dd-e5b0-4c83-8ddd-66750c8c74a1" />
+
+Home page:
+<img width="359" height="799" alt="image" src="https://github.com/user-attachments/assets/d8ac733c-8568-459b-a5c3-c66cc482bd94" />
+
+
+
