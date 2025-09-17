@@ -93,7 +93,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       ),
                     ] else ...[
                       Text(
-                        'Error: ${errorMessage.length > 100 ? errorMessage.substring(0, 100) + "..." : errorMessage}',
+                        'Error: ${errorMessage.length > 100 ? "${errorMessage.substring(0, 100)}..." : errorMessage}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,

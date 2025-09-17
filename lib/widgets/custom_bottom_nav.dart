@@ -14,7 +14,7 @@ class CustomBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CurvedNavigationBar(
-      index: currentIndex,
+      index: currentIndex.clamp(0, 3), // Ensure index is always valid
       height: 60.0,
       items: const <Widget>[
         Icon(Icons.home_outlined, size: 30, color: Colors.white),
@@ -26,8 +26,8 @@ class CustomBottomNav extends StatelessWidget {
       buttonBackgroundColor: Theme.of(context).primaryColor,
       backgroundColor: Colors.transparent,
       animationCurve: Curves.easeInOut,
-      animationDuration: const Duration(milliseconds: 300),
-      onTap: onTap,
+      animationDuration: const Duration(milliseconds: 150), // Even faster animation
+      onTap: onTap, // Remove debouncing - pass tap directly
     );
   }
 }

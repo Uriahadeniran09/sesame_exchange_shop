@@ -144,25 +144,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     stream: _firestoreService.getUserPosts(currentUser.uid),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
                       }
 
                       if (snapshot.hasError) {
                         return Container(
                           padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: Column(
                             children: [
                               Icon(
                                 Icons.error_outline,
                                 size: 48,
-                                color: Colors.grey[400],
+                                color: Colors.red[400],
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Error loading your posts',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey[600],
+                                  color: Colors.red[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Error: ${snapshot.error}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {}); // Trigger rebuild to retry
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
                                 ),
                               ),
                             ],
@@ -173,10 +204,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return Container(
                           padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Column(
                             children: [
                               Icon(
-                                Icons.inventory_2_outlined,
+                                Icons.post_add_outlined,
                                 size: 64,
                                 color: Colors.grey[400],
                               ),
@@ -185,17 +220,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 'No posts yet',
                                 style: TextStyle(
                                   fontSize: 18,
-                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700],
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Share your first item to get started!',
+                                'Share your first item to get started!\nYour posts will appear here.',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[500],
                                 ),
                                 textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  // Navigate to add post screen
+                                  DefaultTabController.of(context).animateTo(1); // Navigate to Add tab
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text('Create Post'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).primaryColor,
+                                  foregroundColor: Colors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -203,14 +252,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
 
                       final posts = snapshot.data!;
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) {
-                          final post = posts[index];
-                          return _buildUserPostCard(post);
-                        },
+                      return Column(
+                        children: [
+                          // Posts summary
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildStatItem('Posts', posts.length.toString()),
+                                _buildStatItem('Available', posts.where((p) => p.isAvailable).length.toString()),
+                                _buildStatItem('Likes', posts.fold<int>(0, (sum, post) => sum + post.likesCount).toString()),
+                              ],
+                            ),
+                          ),
+                          // Posts list
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: posts.length,
+                            itemBuilder: (context, index) {
+                              final post = posts[index];
+                              return _buildPostListCard(post);
+                            },
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -401,6 +472,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPostListCard(PostModel post) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey[200],
+          ),
+          child: post.imageUrls.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    post.imageUrls.first,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.image_not_supported);
+                    },
+                  ),
+                )
+              : const Icon(Icons.image_not_supported),
+        ),
+        title: Text(
+          post.title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              post.category.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              post.isAvailable ? 'Available' : 'Unavailable',
+              style: TextStyle(
+                color: post.isAvailable ? Colors.green : Colors.red,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) async {
+            switch (value) {
+              case 'toggle':
+                await _firestoreService.updatePost(
+                  post.id,
+                  {'isAvailable': !post.isAvailable},
+                );
+                break;
+              case 'delete':
+                _showDeletePostDialog(post);
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'toggle',
+              child: Text(post.isAvailable ? 'Mark Unavailable' : 'Mark Available'),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String title, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
 

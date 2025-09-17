@@ -257,12 +257,12 @@ class UserService {
     try {
       final emailQuery = await _usersCollection
           .where('email', isGreaterThanOrEqualTo: query.toLowerCase())
-          .where('email', isLessThan: query.toLowerCase() + 'z')
+          .where('email', isLessThan: '${query.toLowerCase()}z')
           .get();
 
       final nameQuery = await _usersCollection
           .where('displayName', isGreaterThanOrEqualTo: query)
-          .where('displayName', isLessThan: query + 'z')
+          .where('displayName', isLessThan: '${query}z')
           .get();
 
       final Set<String> seenUids = {};

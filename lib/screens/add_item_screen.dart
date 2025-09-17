@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/ml_service.dart';
 import '../models/post_model.dart';
 import '../utils/string_extensions.dart';
+import '../widgets/custom_bottom_nav.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -306,6 +307,30 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
+  void _onNavTapped(int index) {
+    // Prevent multiple rapid taps
+    if (_isUploading) return;
+
+    // Handle navigation from AddItemScreen with immediate response
+    switch (index) {
+      case 0: // Home
+        // Use immediate pop with result for faster response
+        Navigator.pop(context, {'tab': 'home'});
+        break;
+      case 1: // Add (current screen)
+        // Already on add screen, do nothing
+        return;
+      case 2: // Messages
+        Navigator.pop(context, {'tab': 'messages'});
+        break;
+      case 3: // Profile
+        Navigator.pop(context, {'tab': 'profile'});
+        break;
+      default:
+        Navigator.pop(context, {'tab': 'home'});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -313,7 +338,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
         title: const Text('Add Item'),
         elevation: 0,
         actions: [
-          // Add image button in app bar
           IconButton(
             onPressed: _showImagePickerOptions,
             icon: const Icon(Icons.add_a_photo),
@@ -327,14 +351,16 @@ class _AddItemScreenState extends State<AddItemScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image picker section with enhanced add button
             _buildImagePicker(),
-
-            // Add more images button (always visible)
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _showImagePickerOptions,
@@ -347,20 +373,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // ML Analysis results
             if (_mlAnalysis != null) _buildMLAnalysis(),
-
             const SizedBox(height: 24),
-
-            // Form fields
             _buildFormFields(),
-
             const SizedBox(height: 32),
-
-            // Submit button
             ElevatedButton(
               onPressed: _isUploading ? null : _submitPost,
               style: ElevatedButton.styleFrom(
@@ -387,16 +404,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
             ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
           ],
         ),
       ),
-      // Keep the floating action button as a backup
-      floatingActionButton: _selectedImages.isEmpty
-          ? FloatingActionButton(
-              onPressed: _showImagePickerOptions,
-              child: const Icon(Icons.add_a_photo),
-            )
-          : null,
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 1, // Highlight the add button since we're on add screen
+        onTap: _onNavTapped,
+      ),
     );
   }
 
@@ -425,7 +440,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   itemBuilder: (context, index) {
                     return Stack(
                       children: [
-                        Container(
+                        SizedBox(
                           width: double.infinity,
                           child: Image.file(
                             _selectedImages[index],
@@ -497,48 +512,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 ),
               ),
 
-            // Add more button
-            if (_selectedImages.isNotEmpty)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: GestureDetector(
-                  onTap: _showImagePickerOptions,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                ),
-              ),
-
-            // Analyzing overlay
+            // Loading indicator
             if (_isAnalyzing)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Colors.white),
-                      SizedBox(height: 8),
-                      Text(
-                        'Analyzing image...',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
+              const Center(
+                child: CircularProgressIndicator(),
               ),
           ],
         ),
@@ -547,53 +524,58 @@ class _AddItemScreenState extends State<AddItemScreen> {
   }
 
   Widget _buildMLAnalysis() {
-    final analysis = _mlAnalysis!;
-    final confidence = analysis['confidence'] as double;
-    final labels = analysis['labels'] as List<dynamic>;
+    if (_mlAnalysis == null) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.auto_awesome, color: Colors.blue[600]),
-              const SizedBox(width: 8),
-              Text(
-                'AI Analysis Results',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[600],
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.smart_toy, color: Colors.blue[600]),
+                const SizedBox(width: 8),
+                const Text(
+                  'AI Analysis',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_mlAnalysis!['category'] != null)
+              Chip(
+                label: Text('Category: ${_mlAnalysis!['category'].toString().capitalize()}'),
+                backgroundColor: Colors.blue[50],
+              ),
+            if (_mlAnalysis!['description'] != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Suggested Title: ${_mlAnalysis!['description']}',
+                style: const TextStyle(fontSize: 14),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-
-          Text('Confidence: ${(confidence * 100).round()}%'),
-          Text('Category: ${analysis['category']}'),
-
-          if (analysis['color'] != null)
-            Text('Color: ${analysis['color']}'),
-
-          if (analysis['brand'] != null)
-            Text('Brand: ${analysis['brand']}'),
-
-          if (analysis['size'] != null)
-            Text('Size: ${analysis['size']}'),
-
-          if (labels.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text('Detected objects: ${labels.map((l) => l['text']).join(', ')}'),
+            if (_mlAnalysis!['labels'] != null) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 4,
+                children: (_mlAnalysis!['labels'] as List)
+                    .take(5)
+                    .map((label) => Chip(
+                          label: Text(
+                            label['text'],
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          backgroundColor: Colors.grey[100],
+                        ))
+                    .toList(),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -602,27 +584,22 @@ class _AddItemScreenState extends State<AddItemScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
-        TextField(
-          controller: _titleController,
-          decoration: const InputDecoration(
-            labelText: 'Title *',
-            hintText: 'e.g., Brown leather chair',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.title),
+        // Category dropdown
+        const Text(
+          'Category',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          textCapitalization: TextCapitalization.words,
         ),
-
-        const SizedBox(height: 16),
-
-        // Category
+        const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _selectedCategory,
-          decoration: const InputDecoration(
-            labelText: 'Category',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.category),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           items: _categories.map((category) {
             return DropdownMenuItem(
@@ -631,42 +608,66 @@ class _AddItemScreenState extends State<AddItemScreen> {
             );
           }).toList(),
           onChanged: (value) {
-            setState(() {
-              _selectedCategory = value!;
-            });
+            if (value != null) {
+              setState(() {
+                _selectedCategory = value;
+              });
+            }
           },
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-        // Description
-        TextField(
-          controller: _descriptionController,
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            hintText: 'Tell us more about your item...',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.description),
-            alignLabelWithHint: true,
+        // Title field
+        const Text(
+          'Title *',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          maxLines: 4,
-          textCapitalization: TextCapitalization.sentences,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _titleController,
+          decoration: InputDecoration(
+            hintText: 'What are you sharing?',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          maxLength: 100,
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-        // Location
-        _buildLocationField(),
-      ],
-    );
-  }
-
-  Widget _buildLocationField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        // Description field
         const Text(
-          'Location',
+          'Description',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _descriptionController,
+          decoration: InputDecoration(
+            hintText: 'Tell us more about this item...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          maxLines: 4,
+          maxLength: 500,
+        ),
+
+        const SizedBox(height: 20),
+
+        // Location field
+        const Text(
+          'Location (Optional)',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -675,12 +676,15 @@ class _AddItemScreenState extends State<AddItemScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _locationController,
-          decoration: const InputDecoration(
-            hintText: 'Enter your location',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.location_on),
+          decoration: InputDecoration(
+            hintText: 'Where is this item located?',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            prefixIcon: const Icon(Icons.location_on),
           ),
-          textCapitalization: TextCapitalization.words,
+          maxLength: 100,
         ),
       ],
     );

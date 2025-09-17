@@ -23,20 +23,69 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String _selectedCategory = 'all';
 
-  void _onTabTapped(int index) {
-    if (index == 1) {
-      // Navigate to AddItemScreen when the add tab is tapped
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const AddItemScreen(),
-        ),
-      );
-    } else {
-      setState(() {
-        _currentIndex = index;
-      });
+  int get _bottomNavCurrentIndex {
+    // Map internal index to bottom nav display index
+    switch (_currentIndex) {
+      case 0:
+        return 0; // Home
+      case 1:
+        return 2; // Messages
+      case 2:
+        return 3; // Profile
+      default:
+        return 0; // Fallback to home
     }
+  }
+
+  void _onTabTapped(int index) {
+    // Handle the add button (index 1) specially
+    if (index == 1) {
+      // Navigate to AddItemScreen and listen for result
+      Navigator.pushNamed(context, '/add_item').then((result) {
+        // Handle navigation result from AddItemScreen
+        if (result is Map<String, dynamic> && result['tab'] != null) {
+          final targetTab = result['tab'] as String;
+          int newIndex;
+
+          switch (targetTab) {
+            case 'home':
+              newIndex = 0; // Home internal index
+              break;
+            case 'messages':
+              newIndex = 1; // Messages internal index
+              break;
+            case 'profile':
+              newIndex = 2; // Profile internal index
+              break;
+            default:
+              newIndex = 0; // Home fallback
+          }
+
+          setState(() {
+            _currentIndex = newIndex;
+          });
+        }
+      });
+      return;
+    }
+
+    // For other tabs, map bottom nav indices to internal indices immediately
+    // Bottom nav: [Home(0), Add(1), Messages(2), Profile(3)]
+    // Internal:   [Home(0),        Messages(1), Profile(2)]
+    int actualIndex;
+    if (index == 0) {
+      actualIndex = 0; // Home
+    } else if (index == 2) {
+      actualIndex = 1; // Messages
+    } else if (index == 3) {
+      actualIndex = 2; // Profile
+    } else {
+      actualIndex = 0; // Fallback to home
+    }
+
+    setState(() {
+      _currentIndex = actualIndex;
+    });
   }
 
   Future<void> _handlePostLike(PostModel post) async {
@@ -69,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
           appBar: _currentIndex == 0 ? _buildHomeAppBar() : null,
           body: _buildBody(),
           bottomNavigationBar: CustomBottomNav(
-            currentIndex: _currentIndex,
+            currentIndex: _bottomNavCurrentIndex, // Use the mapped index
             onTap: _onTabTapped,
           ),
           floatingActionButton: _currentIndex == 0
@@ -80,7 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(
                         builder: (context) => const AddItemScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      // Clear focus when returning from AddItemScreen
+                      FocusScope.of(context).unfocus();
+                    });
                   },
                   child: const Icon(Icons.add),
                 )
@@ -176,11 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHomeFeed();
       case 1:
-        return const Center(child: Text('Search')); // TODO: Implement search
+        return const MessagesScreen(); // Messages moved to index 1 (was index 2)
       case 2:
-        return const MessagesScreen(); // Now shows actual messages functionality
-      case 3:
-        return const ProfileScreen();
+        return const ProfileScreen(); // Profile moved to index 2 (was index 3)
       default:
         return _buildHomeFeed();
     }
@@ -251,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ] else ...[
                     Text(
-                      'Error: ${errorMessage.length > 100 ? errorMessage.substring(0, 100) + "..." : errorMessage}',
+                      'Error: ${errorMessage.length > 100 ? "${errorMessage.substring(0, 100)}..." : errorMessage}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,

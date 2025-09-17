@@ -7,6 +7,9 @@ import 'services/ml_service.dart';
 import 'services/firestore_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/add_item_screen.dart';
+import 'screens/messages_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/post_detail_screen.dart';
 import 'models/post_model.dart';
 
@@ -70,6 +73,10 @@ class SesameExchangeApp extends StatelessWidget {
             final PostModel post = ModalRoute.of(context)!.settings.arguments as PostModel;
             return PostDetailScreen(post: post);
           },
+          '/home': (context) => const HomeScreen(),
+          '/add_item': (context) => const AddItemScreen(),
+          '/messages': (context) => const MessagesScreen(),
+          '/profile': (context) => const ProfileScreen(),
         },
       ),
     );

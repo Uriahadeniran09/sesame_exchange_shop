@@ -263,7 +263,7 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         return PostModel.fromMap(data);
       }).toList();
     });
@@ -273,13 +273,17 @@ class FirestoreService {
   Stream<List<PostModel>> getUserPosts(String userId) {
     return _firestore.collection('posts')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+      final posts = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id; // Add the document ID to the data
         return PostModel.fromMap(data);
       }).toList();
+
+      // Sort by createdAt in memory to avoid composite index requirement
+      posts.sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Descending order (newest first)
+      return posts;
     });
   }
 
@@ -511,6 +515,7 @@ class FirestoreService {
         if (aTime == null || bTime == null) return 0;
         return bTime.compareTo(aTime); // Descending order (newest first)
       });
+      return messages;
     });
   }
 
