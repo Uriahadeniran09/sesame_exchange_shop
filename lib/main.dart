@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/ml_service.dart';
 import 'services/firestore_service.dart';
@@ -17,10 +19,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await Firebase.initializeApp();
-    print('Firebase initialized successfully');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase initialized successfully for ${kIsWeb ? 'web' : 'mobile'}');
   } catch (e) {
-    print('Firebase initialization failed: $e');
+    print('❌ Firebase initialization failed: $e');
     // Still run the app but with error handling
   }
 

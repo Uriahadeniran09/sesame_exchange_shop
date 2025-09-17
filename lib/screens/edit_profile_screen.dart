@@ -6,6 +6,7 @@ import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
 import '../models/user_profile_model.dart';
 import '../models/address_model.dart';
+import '../services/ml_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -78,6 +79,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         _selectedAdditionalImages = pickedFiles.map((file) => File(file.path)).toList();
       });
+
+      // Analyze the first image with ML Kit to suggest better descriptions
+      if (pickedFiles.isNotEmpty) {
+        try {
+          final mlService = MLService();
+          await mlService.initialize();
+          final analysis = await mlService.analyzeImage(File(pickedFiles.first.path));
+
+          // If bio is empty, suggest a description based on detected items
+          if (_bioController.text.isEmpty && analysis['description'] != null) {
+            setState(() {
+              _bioController.text = 'I have ${analysis['description']} and other items to share!';
+            });
+          }
+
+          await mlService.dispose();
+        } catch (e) {
+          print('Error analyzing additional images: $e');
+        }
+      }
     }
   }
 
