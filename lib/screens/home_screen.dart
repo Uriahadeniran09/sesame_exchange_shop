@@ -4,8 +4,6 @@ import '../models/post_model.dart';
 import '../services/firestore_service.dart';
 import '../widgets/post_card.dart';
 import '../screens/add_item_screen.dart';
-import '../screens/messages_screen.dart';
-import '../screens/profile_screen.dart';
 import '../widgets/message_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -215,45 +213,16 @@ class _HomeScreenState extends State<HomeScreen> {
               final post = posts[index];
 
               return PostCard(
+                key: ValueKey(post.id),
                 post: post,
-                onLike: () => _handleLike(post),
-                onComment: () => _handleComment(post),
+                onRefresh: () {
+                  setState(() {}); // Refresh the posts list when interactions occur
+                },
               );
             },
           ),
         );
       },
-    );
-  }
-
-  void _handleLike(PostModel post) async {
-    if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to like posts')),
-      );
-      return;
-    }
-
-    try {
-      if (post.isLikedByCurrentUser) {
-        await _firestoreService.unlikePost(post.id, currentUserId!);
-      } else {
-        await _firestoreService.likePost(post.id, currentUserId!);
-      }
-    } catch (e) {
-      print('Error toggling like: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update like')),
-      );
-    }
-  }
-
-  void _handleComment(PostModel post) {
-    // Navigate to post detail screen for commenting
-    Navigator.pushNamed(
-      context,
-      '/post-detail',
-      arguments: post,
     );
   }
 }

@@ -20,6 +20,7 @@ class FirestoreService {
   CollectionReference get _usersCollection => _firestore.collection('users');
   CollectionReference get _profilesCollection => _firestore.collection('user_profiles');
   CollectionReference get _messagesCollection => _firestore.collection('messages');
+  CollectionReference get _postsCollection => _firestore.collection('posts');
 
   /// ============ CONNECTING TO YOUR SPECIFIC FIREBASE DATA ============
 
@@ -407,6 +408,43 @@ class FirestoreService {
     }
   }
 
+  /// Toggle like and return updated likesCount. Returns null on error.
+  Future<int?> togglePostLikeAndGetCount(String postId, String userId) async {
+    try {
+      final postRef = _firestore.collection('posts').doc(postId);
+      final likesRef = postRef.collection('likes').doc(userId);
+
+      final likeDoc = await likesRef.get();
+
+      if (likeDoc.exists) {
+        // Unlike the post
+        await likesRef.delete();
+        await postRef.update({
+          'likesCount': FieldValue.increment(-1),
+        });
+      } else {
+        // Like the post
+        await likesRef.set({
+          'userId': userId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        await postRef.update({
+          'likesCount': FieldValue.increment(1),
+        });
+      }
+
+      // Read the refreshed likesCount
+      final refreshed = await postRef.get();
+      if (!refreshed.exists) return null;
+      final data = refreshed.data();
+      if (data == null) return null;
+      return (data['likesCount'] ?? 0) as int;
+    } catch (e) {
+      print('Error toggling post like and getting count: $e');
+      return null;
+    }
+  }
+
   /// Check if user has liked a post
   Future<bool> hasUserLikedPost(String postId, String userId) async {
     try {
@@ -672,6 +710,20 @@ class FirestoreService {
       return null;
     } catch (e) {
       print('Error getting conversation: $e');
+      return null;
+    }
+  }
+
+  /// Get likes count for a post
+  Future<int?> getPostLikesCount(String postId) async {
+    try {
+      final doc = await _firestore.collection('posts').doc(postId).get();
+      if (!doc.exists) return null;
+      final data = doc.data();
+      if (data == null) return null;
+      return (data['likesCount'] ?? 0) as int;
+    } catch (e) {
+      print('Error getting post likes count: $e');
       return null;
     }
   }
