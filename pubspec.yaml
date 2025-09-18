@@ -63,6 +63,7 @@ dependencies:
   # Utilities
   cached_network_image: ^3.3.0
   permission_handler: ^11.0.1
+  path_provider: ^2.1.1
 
 dev_dependencies:
   flutter_test:

@@ -28,11 +28,19 @@ class _LoginScreenState extends State<LoginScreen> {
         // Don't navigate manually - let AuthWrapper handle this
         // The AuthWrapper will automatically navigate to HomeScreen when auth state changes
       } else {
-        print('LoginScreen: Authentication failed or was cancelled');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sign-in was cancelled')),
-          );
+        // Check if user is actually signed in despite null userCredential
+        // This can happen with redirect-based auth on web
+        final currentUser = _authService.currentUser;
+        if (currentUser != null) {
+          print('LoginScreen: Authentication successful (redirect flow), user: ${currentUser.email}');
+          // User is actually signed in, don't show error
+        } else {
+          print('LoginScreen: Authentication failed or was cancelled');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sign-in was cancelled')),
+            );
+          }
         }
       }
     } catch (e) {

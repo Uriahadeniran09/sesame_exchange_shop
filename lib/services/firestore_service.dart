@@ -264,6 +264,8 @@ class FirestoreService {
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
+        // Ensure the document ID is included in the data
+        data['id'] = doc.id;
         return PostModel.fromMap(data);
       }).toList();
     });
@@ -287,6 +289,21 @@ class FirestoreService {
     });
   }
 
+  /// Get posts by category
+  Stream<List<PostModel>> getPostsByCategory(String category) {
+    return _firestore.collection('posts')
+        .where('category', isEqualTo: category)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return PostModel.fromMap(data);
+      }).toList();
+    });
+  }
+
   /// Update post
   Future<bool> updatePost(String postId, Map<String, dynamic> updates) async {
     try {
@@ -305,6 +322,55 @@ class FirestoreService {
       return true;
     } catch (e) {
       print('Error deleting post: $e');
+      return false;
+    }
+  }
+
+  /// Like a post
+  Future<bool> likePost(String postId, String userId) async {
+    try {
+      // Add like to likes subcollection
+      await _firestore
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(userId)
+          .set({
+        'userId': userId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Increment likes count on the post
+      await _firestore.collection('posts').doc(postId).update({
+        'likesCount': FieldValue.increment(1),
+      });
+
+      return true;
+    } catch (e) {
+      print('Error liking post: $e');
+      return false;
+    }
+  }
+
+  /// Unlike a post
+  Future<bool> unlikePost(String postId, String userId) async {
+    try {
+      // Remove like from likes subcollection
+      await _firestore
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(userId)
+          .delete();
+
+      // Decrement likes count on the post
+      await _firestore.collection('posts').doc(postId).update({
+        'likesCount': FieldValue.increment(-1),
+      });
+
+      return true;
+    } catch (e) {
+      print('Error unliking post: $e');
       return false;
     }
   }
@@ -344,6 +410,12 @@ class FirestoreService {
   /// Check if user has liked a post
   Future<bool> hasUserLikedPost(String postId, String userId) async {
     try {
+      // Validate that both postId and userId are not empty
+      if (postId.isEmpty || userId.isEmpty) {
+        print('Warning: hasUserLikedPost called with empty postId ($postId) or userId ($userId)');
+        return false;
+      }
+
       final likeDoc = await _firestore
           .collection('posts')
           .doc(postId)
@@ -558,6 +630,49 @@ class FirestoreService {
     } catch (e) {
       print('Error marking message as read: $e');
       return false;
+    }
+  }
+
+  /// ============ SEARCH AND FILTER METHODS ============
+
+  /// Search posts by title or description
+  Stream<List<PostModel>> searchPosts(String query) {
+    return _firestore.collection('posts')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return PostModel.fromMap(data);
+          })
+          .where((post) =>
+              post.title.toLowerCase().contains(query.toLowerCase()) ||
+              post.description.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  /// ============ MESSAGE METHODS (for integration) ============
+
+  /// Get conversation between two users
+  Future<String?> getConversationId(String userId1, String userId2) async {
+    try {
+      final query = await _firestore
+          .collection('conversations')
+          .where('participants', arrayContains: userId1)
+          .get();
+
+      for (var doc in query.docs) {
+        final participants = List<String>.from(doc.data()['participants']);
+        if (participants.contains(userId2)) {
+          return doc.id;
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Error getting conversation: $e');
+      return null;
     }
   }
 }

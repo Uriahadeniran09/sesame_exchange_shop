@@ -10,7 +10,6 @@ import '../services/auth_service.dart';
 import '../services/ml_service.dart';
 import '../models/post_model.dart';
 import '../utils/string_extensions.dart';
-import '../widgets/custom_bottom_nav.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -575,26 +574,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
   }
 
-  void _onNavTapped(int index) {
-    if (_isUploading) return;
-
-    switch (index) {
-      case 0:
-        Navigator.pop(context, {'tab': 'home'});
-        break;
-      case 1:
-        return;
-      case 2:
-        Navigator.pop(context, {'tab': 'messages'});
-        break;
-      case 3:
-        Navigator.pop(context, {'tab': 'profile'});
-        break;
-      default:
-        Navigator.pop(context, {'tab': 'home'});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -668,13 +647,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
             ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
           ],
         ),
-      ),
-      bottomNavigationBar: CustomBottomNav(
-        currentIndex: 1,
-        onTap: _onNavTapped,
       ),
     );
   }
@@ -894,7 +869,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedCategory,
+          initialValue: _selectedCategory,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

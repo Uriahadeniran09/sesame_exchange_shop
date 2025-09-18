@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/post_model.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -350,21 +352,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
           const SizedBox(height: 12),
           // Contact seller button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _showContactOptions(context);
-              },
-              icon: const Icon(Icons.message),
-              label: const Text('Contact Seller'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+          if (!kIsWeb) // Hide on web
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _startDirectMessage();
+                },
+                icon: const Icon(Icons.message),
+                label: const Text('Contact Seller'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -434,34 +437,50 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  void _showContactOptions(BuildContext context) {
-    showModalBottomSheet(
+  void _startDirectMessage() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final currentUserId = currentUser.uid;
+      final userIds = [currentUserId, widget.post.userId]..sort();
+      final conversationId = userIds.join('_');
+
+      // Navigate to chat screen
+      Navigator.pushNamed(
+        context,
+        '/chat',
+        arguments: {
+          'conversationId': conversationId,
+          'recipientId': widget.post.userId,
+          'recipientName': widget.post.userName,
+          'postTitle': widget.post.title,
+        },
+      );
+    } else {
+      // If the user is not logged in, show a message or redirect to login
+      _showLoginRequiredDialog();
+    }
+  }
+
+  void _showLoginRequiredDialog() {
+    showDialog(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Contact Seller',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.message),
-            title: const Text('Send Message'),
-            onTap: () {
+      builder: (context) => AlertDialog(
+        title: const Text('Login Required'),
+        content: const Text('You need to be logged in to contact the seller.'),
+        actions: [
+          TextButton(
+            onPressed: () {
               Navigator.pop(context);
-              // Navigate to chat screen
             },
+            child: const Text('Cancel'),
           ),
-          ListTile(
-            leading: const Icon(Icons.phone),
-            title: const Text('Call'),
-            onTap: () {
+          TextButton(
+            onPressed: () {
               Navigator.pop(context);
-              // Make phone call
+              // Navigate to login screen
+              Navigator.pushNamed(context, '/login');
             },
+            child: const Text('Login'),
           ),
         ],
       ),
